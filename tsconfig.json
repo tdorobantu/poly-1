@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+      "module": "ESNext",
+      "moduleResolution": "node",
+      "target": "ESNext",
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "allowImportingTsExtensions": true,
+      "noEmit": true
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+  }
