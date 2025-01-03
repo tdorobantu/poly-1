@@ -9,6 +9,7 @@ import usdcAbi from "./abi/usdcAbi.ts";
 import getUsdcContract from "./getUsdcContract.ts";
 import getCtfContract from "./getCtfContract.ts";
 import approveAllowances from "./approveAllowances.ts";
+import { SignatureType } from "@polymarket/order-utils";
 
 
 
@@ -19,6 +20,7 @@ const privateKey = process.env.WALLET_PK || ""; // Private key from environment 
 const host = process.env.CLOB_API_URL || "http://localhost:8080";
 const chainId = process.env.CHAIN_ID ? Number(process.env.CHAIN_ID) : 137; // Polygon Mainnet Chain ID
 const usdcAddress = process.env.USDC_ADDRESS || ""
+const polymarketAddress = process.env.WALLET_POLY_MARKET
 
 const wallet = getWallet(rpcUrl, privateKey)
 
@@ -34,7 +36,16 @@ const creds: ApiKeyCreds = {
 
 // Initialize the clob client
 // NOTE: the signer must be approved on the CTFExchange contract
-const clobClient = new ClobClient(host, chainId, wallet, creds);
+
+// Initialization of a client using a Polymarket Proxy Wallet associated with a Browser Wallet(Metamask, Coinbase Wallet)
+const clobClient = new ClobClient(
+  host as string,
+  (await wallet.getChainId()) as number,
+  wallet as ethers.Wallet | ethers.providers.JsonRpcSigner,
+  creds, // creds
+  SignatureType.POLY_GNOSIS_SAFE,
+  polymarketAddress
+);
 
 const collateral = await clobClient.getBalanceAllowance({ asset_type: AssetType.COLLATERAL });
 console.log(collateral);
@@ -55,16 +66,22 @@ console.log(market);
 
     const order = await clobClient.createOrder({
         tokenID: NO,
-        price: 0.23,
+        price: 0.20,
         side: Side.BUY,
-        size: 100,
-        expiration: oneMinute,
+        size: 5,
     });
     console.log("Created Order", order);
 
     // Send it to the server
-    const responseOne = await clobClient.postOrder(order, OrderType.GTD);
-    console.log(responseOne);
+    // const responseOne = await clobClient.postOrder(order, OrderType.GTC);
+    // console.log(responseOne);
     
+
+    const resp = await clobClient.getOpenOrders({
+      market:
+        "0xb7faecd2db357e4634fe87ef9bb48b4e1305cd618276d730b73190662fe6bafd",
+    });
+    console.log(resp);
+    console.log(`Done!`);
  
     
