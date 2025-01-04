@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { getContractConfig } from "./config.ts";
-import usdcAbi from "./abi/usdcAbi.ts";
+import { getContractConfig } from "../../config/config.ts";
+import usdcAbi from "../../abi/usdcAbi.ts";
 
 
 const getUsdcContract = async (wallet: ethers.Wallet): Promise<ethers.Contract> => {

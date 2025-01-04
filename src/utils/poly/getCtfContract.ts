@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { getContractConfig } from "./config.ts";
-import ctfAbi from "./abi/ctfAbi.ts";
+import { getContractConfig } from "../../config/config.ts";
+import ctfAbi from "../../abi/ctfAbi.ts";
 
 const getCtfContract = async (wallet: ethers.Wallet): Promise<ethers.Contract> => {
     console.log("🚀 Initializing CTF (Conditional Tokens Framework) Contract...");

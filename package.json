@@ -5,7 +5,7 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "ts-node --esm -r tsconfig-paths/register index.ts",
+    "start": "ts-node --esm -r tsconfig-paths/register src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,7 +20,9 @@
     "@polymarket/order-utils": "^2.1.0",
     "dotenv": "^16.4.7",
     "ethers": "^5.7.2",
-    "tslib": "^2.8.1"
+    "socket.io-client": "^4.8.1",
+    "tslib": "^2.8.1",
+    "xstate": "^5.19.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

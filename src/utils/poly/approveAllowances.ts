@@ -2,7 +2,7 @@ import { BigNumber, constants, ethers } from "ethers";
 import getWallet from "./getWallet.ts";
 import getUsdcContract from "./getUsdcContract.ts";
 import getCtfContract from "./getCtfContract.ts";
-import { getContractConfig } from "./config.ts";
+import { getContractConfig } from "../../config/config.ts";
 
 const approveAllowances = async (
     rpcUrl: string,
