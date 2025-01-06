@@ -1,7 +1,7 @@
 import { ClobClient } from "@polymarket/clob-client";
 import { SignatureType } from "@polymarket/order-utils";
-import getCredentials from "../utils/poly/getCredentials";
-import getWallet from "../utils/poly/getWallet";
+import getCredentials from "../utils/poly/getCredentials.ts";
+import getWallet from "../utils/poly/getWallet.ts";
 
 
 let clobClientInstance: ClobClient | null = null;
