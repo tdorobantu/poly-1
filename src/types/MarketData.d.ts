@@ -7,7 +7,8 @@ import {
 type MarketData = null | {
   orderBook: OrderBookSummary;
   openOrders: OpenOrdersResponse;
-  positions: Trade[];
+  exposure: number;
+  walletBalance: number;
 };
 
 export default MarketData;

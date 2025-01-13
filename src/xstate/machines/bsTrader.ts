@@ -1,6 +1,6 @@
-import { createMachine, fromPromise, setup, assign } from "xstate";
+import { createMachine, fromPromise, setup, assign, raise } from "xstate";
 import { getClobClient } from "../../services/clobClientSingleton.ts";
-import fetchMarket from "../../fetchMarket.ts";
+import fetchMarkeData from "../../fetchMarketData.ts";
 import MarketData from "../../types/MarketData";
 import { json } from "stream/consumers";
 
@@ -13,23 +13,25 @@ const bsTrader = setup({
       market: string;
       walletLimit: number;
       tradeLimit: number;
+      timeLimit: number;
     },
     input: {} as {
       assetId: string;
       market: string;
       walletLimit: number;
       tradeLimit: number;
+      timeLimit: number;
     },
     events: {} as
       | { type: "GO_CLOB_ERROR"; value: string }
       | { type: "EVENT_OVER" }
-      | { type: "GO_ORDER_BOOK"; value: string }
+      | { type: "FUNDS_AVAILABLE"; value: string }
       | { type: "GO_POSITIONS" }
       | { type: "CYCLE_DONE" }
       | { type: "ORDER_PLACEMENT_FAILED" }
-      | { type: "NO_POSITIONS" }
+      | { type: "NO_FUNDS" }
       | { type: "NO_OPPORTUNITIES" }
-      | { type: "SEND_TELEGRAM" }
+      | { type: "EVALUATE" }
       | { type: "END_MARKET" }
       | { type: "xstate.done.actor.fetchMarket"; output: null | MarketData }
       | { type: "GO_PLACE_ORDERS" },
@@ -45,57 +47,42 @@ const bsTrader = setup({
     }),
     sayMarketData: ({ context }) =>
       console.log("the context is now ", JSON.stringify(context)),
-    evaluatePosition: ({ context }) => {
-      if (context.marketData) {
-        const { positions, openOrders } = context.marketData;
-        const totalExposurPositions = positions;
-        // .filter(
-        //   (trade) =>
-        //     trade.asset_id === context.assetId &&
-        //     trade.market === context.market
-        // );
-
-        //   .reduce(
-        //     (total, trade) =>
-        //       total + parseFloat(trade.size) * parseFloat(trade.price),
-        //     0
-        //   );
-        const totalExposureOpenBuyOrders = openOrders;
-        // .filter(
-        //   (openOrder) =>
-        //     openOrder.asset_id === context.assetId &&
-        //     openOrder.market === context.market &&
-        //     openOrder.side === "BUY"
-        // );
-        //   .reduce(
-        //     (total, openOrders) =>
-        //       total +
-        //       (parseFloat(openOrders.original_size) -
-        //         parseFloat(openOrders.size_matched)) *
-        //         parseFloat(openOrders.price),
-        //     0
-        //   );
-        console.log({
-          totalExposurPositions: JSON.stringify(totalExposurPositions),
-          //   totalExposureOpenBuyOrders,
-        });
+    evaluateFundsAndEvent: ({ context }) => {
+      if (!context.marketData) {
+        raise({ type: "NO_FUNDS" });
       }
+      const { exposure, walletBalance } = context.marketData;
+
+      if (walletBalance <= context.walletLimit) {
+        raise({ type: "NO_FUNDS" });
+      }
+
+      if (exposure >= context.tradeLimit) {
+        raise({ type: "NO_FUNDS" });
+      }
+      if (context.timeLimit > Date.now()) {
+        raise({ type: "EVENT_OVER" });
+      }
+
+      raise({ type: "FUNDS_AVAILABLE" });
     },
+
     //   sayEvent: ({event}) => console.log("the event is now ", JSON.stringify(event))
   },
   actors: {
     getClobClient: fromPromise(getClobClient),
-    fetchMarket: fromPromise(fetchMarket),
+    fetchMarkeData: fromPromise(fetchMarkeData),
   },
   guards: {},
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EARgAcANln5ZAVgAsFi8YDs9q1cP6ANCACeiC0fMBOQKsAZnt9Yyt-ewBfaI9UTBw8Dg1qOkY8DGYCZSosMgAzbIBbfAFhUXFJGQVtVXUKLSRdAxMzSxs7R2dXD28EC38LfFNZWX19eyirY1DY+PRsXAICsDIAYwALAFksDD4yJlZ2Em4+fFWNnb2DuUVm+o0m0D0EI2N-fENZTuN9YMmVgATMY+oggT98BYxuN9LIhpMHPMQAklslLltdvs1gxMtl8Ll8kUMKUMddsTV7io1E9iNpXkDglZ7PggcCfv5ZCYQaEwQgbECvpFAl1DJzDIYrMjUUkCGBONQAK75MAABRpjWIDAAogA1bUAOTQAH0APL6gBKdzqGs0dOaDKs+nwwv8hiBbNkwUM0KsfPdrOFYvs3sC9kl0sWsvw8qVKvVDTtDAA4qazRaACLai3GgBCptNAGlrQ9bc8Wgg2c7Xe7Pd7fXybCzgi3QsF-A4foyLJHEssYwqqMqyGqy1qDWnVaaAMoASTQs9NBunJepifLjurgTdHqsXp9Pz5wUZ+Hs0PGTjDkSlcRRUf7saHKtNGGWueYvBTk4AMgBBQTaumWYWiutSluu9ovIgxhAoYIxDACLYfBYkoWI20L4P44TGB8kpBMyPa3jKD6DsOYAvm+H48AwE5mqqU4WmgACqBrzrO2qgVSICPJq9LQbB8EWIhwTIahfLGD6mHbv4TIyYMhgxER97JIS6zka+eCwAwpqZtmxqqn+AHbIaJoAGK-rO37ahmq7cWOfEIG6nxuiEbIKe63zuF4PjGMMbJBA4YooTeCx9ipeRqRRmkMNOhoZsaaDalZyYWr+2y2TxdoOU5mGSseLjhrB4yNs4UIwohnlAr4imhWiBDrCIsCjhBWlxca2y-hahbamgGX2Q6-FwchwmiTY-qClVYwenYPIOP4vZ1fgsBkFgxAQLmngMDoy0qvgWAFCOGAABTngAlAwxHJDta0bX1EEOe87TWLYDhOC4Xn9DYZiyR2sG2ECNV3mFBAjlQYBQNgxQMIIACaghWcaGZLtqd20g9oSfLMIJRIY7a45MJVWGVYwRBCoQRJMsS3sQzC4PAzSXRgNr3QNCAALQQlJoT6M49imMEKGWHybPGOYMJjN8YRAjzOHGAt0YkKkND0MzaOs-o1gsv5CnAuE3OGHy0IsnhQxeuEFhTIRtXRg1ojahgWRM+BatQZWFhAp8YqWLIZ5ROE-joXBIKyzBqFCSFQOLWSWIHKrvGsxCQmnhKMkOMye4A42AkCzCjJ804MFy0pwMDnGI4Ji7dks67ANi6H-3thTQx8oirKTB6Hw-DBZ5AvLJFl+plG8HHWWsyERPDflMu+8E6HG62To80yXoC334VYJFGkYPTa6V68eX4KEjIRP47IWx9iA2NW2G4cKvNW5HNuNc1tI71Xe+X5Eh8C3J-wKQL9hxqniDFEUMUR5rFyjorWAmxIAjw3IgSUzoUIoSiCCAGTl-Rbmkv4CEboeZrwINdda-Rd7x1dhrTk5hHCBDFDyF6JVPg50sPWfcIlgiEPwKDcGkN4GQQrPoEEzpZAwWBN6ewjJvh+m8vyUqOCfR2BcH8IusQgA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EAZgCsAFnwAOAExmAjCaP6L1gJzGANCACeiaxYBs5w1sAdgtjJ19jQ1kLIIBfWPdUTBw8Dg1qOkY8DGYCZSosMgAzXIBbfAFhUXFJGQVtVXUKLSRdAxNzK1tje0cXdy8EIMN9fAiHILN9a2MLB194xPRsXAIisDIAYwALAFksDD4yJlZ2Em4+fHWtvYOjuUVWxo0W0D0EMxt8WWNfJzNZNZ9IDrFMBogvlFZNDfEEnIYnEEjBZFiAkitUtcdvtDhsGNlcvh8oUShhyljbri6o8VGoXsRtO9PtZvr9-oDgdZQfpwQhfPpTPonPMgqDZL5DKFUeiUgQwJxqABXQpgABiiuIEFgAEFNQBRTi1Bh6gBqeoAcmgAPoAeTNACUHg06c0Ga13tZhv5ZNNjLJPr5fNZZIZecGWWZhaETDFJZGzNLlrL8PKlSr1ZqdfrDVIGKqAKrmgAiAGUrdqTdqAJIAGW1ACEa3qnU8XZo3W9vDEzPhpn5ooFQiEwyN8BY-IYgkF-aDwoZE8lVimFVRlWQ1RqtbqIAajeabVaC8WSy3aU124zvF7vr7-WZA8HQ55vJLe1GekFjGZDPzQQuMXKK5rmANoYKs9bMLwDAAOIHgACnWgh6ra9pFnq9onvUrbnq8bQID4069gikQ+LYwrwryQqmJGDg9GE3TGHECRokmS6pquKqgeBkE8Aw+62nBcE2vaaCFlWaBVnqmE0iAzyupe+ExLIREuIOZFCk+gwxKYMy0T00zREECzMTKS7EpsYD1oqHhcXgsAMMJaH2laCHakhuwWtaqrVk2RanrJba4R614+jMd4PiGlHCuY74WOK8KIvoxlLIuqSbCIsBgHBgXEPZFpFlauzavaADSepoP5ckXu6iB9P4lhTACnqGDYYaAjFtExsMFhOP+yawGQWCavWHgMDoA0qvgWBFOuGAABRQgAlAwpmpBNw0eJVOUKbOLKyJMfgCqEFiTjyz4IIEhj4LpJ2+D804hCiJmsak5lgCWYBUFQtkYHllY1vm2poM2WFnvSO1KSpJGOAiGltRY+AhBKkxGf6vhzE9zHEMwuDwK0q0YM6OEdnhAC0vi8qTV1ODTNMhMC04+vowx9UuJDpDQ9BE+DNUILMYbWP4d22ACIQ-E4Pys2lIjIHqGA5IT2E852+Hiv4RguD1YRWJOvL8k45iyDTxg9IYZv-POz2pWsGzYncGzc-JvMmD2k42JYorTujFPncGCNGME44EVY0xS4BabrhmW7ZrUjvVSrMxfCdgJ+sYQLhLy0U3WnsLfiGNNh8uEcgWBeAQbwcdBd44oshrswuE4OtBGG6PXYCLWAgGgT7YXb1WTZpe-ZXJMeiMymip8NP7eK4pmFFgpRtOXQ-mbhfpWoWU5XjYNOyrcXM234RzH8oqRM3vvRG+nWzN1vVWwBVzs7A2yQMPCnH+PAq-oifi-G1LI3SSgiUU0QzBMRSg-daEARpv15vvIIh90ZJURDMXW51Yz4Bpg4X0P4hQRF7gUCyH0vo-W3gFYmO19remmDQ+8d0QxzwvqMccyMwF3XvBjeI8QgA */
   context: ({ input }) => ({
     walletLimit: input.walletLimit,
     marketData: null,
     assetId: input.assetId,
     market: input.market,
     tradeLimit: input.tradeLimit,
+    timeLimit: input.timeLimit,
   }),
   id: "bsTrader",
   initial: "initialize",
@@ -126,9 +113,9 @@ const bsTrader = setup({
       invoke: {
         id: "fetchMarket",
         systemId: "fetchMarket",
-        src: "fetchMarket",
+        src: "fetchMarkeData",
         onDone: {
-          target: "evaluatePosition",
+          target: "placeSellOrders",
           reenter: true,
           actions: [{ type: "assignMarketData" }],
         },
@@ -140,17 +127,17 @@ const bsTrader = setup({
       },
     },
 
-    evaluatePosition: {
-      entry: [{ type: "evaluatePosition" }],
+    evaluateFundsAndEvent: {
+      entry: [{ type: "evaluateFundsAndEvent" }],
       on: {
         EVENT_OVER: {
           target: "closePositions",
           reenter: true,
         },
 
-        GO_ORDER_BOOK: "evaluateOrderBook",
+        FUNDS_AVAILABLE: "evaluateOrderBook",
 
-        NO_POSITIONS: {
+        NO_FUNDS: {
           target: "standBy",
           reenter: true,
         },
@@ -159,7 +146,7 @@ const bsTrader = setup({
 
     evaluateOrderBook: {
       on: {
-        GO_PLACE_ORDERS: "placeOrders",
+        GO_PLACE_ORDERS: "placeBuyOrders",
         NO_OPPORTUNITIES: {
           target: "standBy",
           reenter: true,
@@ -167,10 +154,12 @@ const bsTrader = setup({
       },
     },
 
-    placeOrders: {
+    placeBuyOrders: {
       on: {
-        ORDER_PLACEMENT_FAILED: "standBy",
-        SEND_TELEGRAM: "telegram",
+        ORDER_PLACEMENT_FAILED: {
+          target: "standBy",
+          reenter: true,
+        },
       },
     },
 
@@ -193,10 +182,10 @@ const bsTrader = setup({
       },
     },
 
-    telegram: {
+    placeSellOrders: {
       on: {
-        CYCLE_DONE: {
-          target: "standBy",
+        EVALUATE: {
+          target: "evaluateFundsAndEvent",
           reenter: true,
         },
       },

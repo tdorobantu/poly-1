@@ -6,7 +6,7 @@ import { AssetType, OrderType, Side } from "@polymarket/clob-client";
 import getBalance from "./utils/ethers/getBalance.ts";
 import getPolymarketPositions from "./utils/poly/getPolymarketPositions.ts";
 import getAssetExposure from "./utils/poly/getAssetExposure.ts";
-import fetchMarket from "./fetchMarket.ts";
+import fetchMarket from "./fetchMarketData.ts";
 import cancelOrdersByAssetId from "./utils/poly/cancelOrdersByAssetId.ts";
 import isBelowWalletLimit from "./utils/ethers/isBelowWalletLimit.ts";
 
