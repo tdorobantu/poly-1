@@ -5,9 +5,10 @@ import { getClobClient } from "./services/clobClientSingleton.ts";
 import { AssetType, OrderType, Side } from "@polymarket/clob-client";
 import getBalance from "./utils/ethers/getBalance.ts";
 import getPolymarketPositions from "./utils/poly/getPolymarketPositions.ts";
-import buyLimit from "./buyLimit.ts";
+import getAssetExposure from "./utils/poly/getAssetExposure.ts";
 import fetchMarket from "./fetchMarket.ts";
 import cancelOrdersByAssetId from "./utils/poly/cancelOrdersByAssetId.ts";
+import isBelowWalletLimit from "./utils/ethers/isBelowWalletLimit.ts";
 
 // const clobClient = await getClobClient();
 
@@ -50,16 +51,16 @@ const ASSET_ID =
 // const resp2 = await clobClient.postOrder(order2, OrderType.GTC);
 // console.log(resp2);
 
-await cancelOrdersByAssetId(ASSET_ID, Side.BUY);
-
 const input = {
-  walletLimit: 300,
-  tradeLimit: 10,
   market: MARKET,
   assetId: ASSET_ID,
 };
 
-const output = await buyLimit({ input });
+const res = await isBelowWalletLimit(320);
+
+console.log("res is", res);
+
+const output = await getAssetExposure(MARKET, ASSET_ID);
 
 // await fetchMarket();
 
