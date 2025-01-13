@@ -11,11 +11,13 @@ const bsTrader = setup({
       marketData: null | MarketData;
       assetId: string;
       market: string;
+      walletLimit: number;
       tradeLimit: number;
     },
     input: {} as {
       assetId: string;
       market: string;
+      walletLimit: number;
       tradeLimit: number;
     },
     events: {} as
@@ -89,6 +91,7 @@ const bsTrader = setup({
 }).createMachine({
   /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EARgAcANln5ZAVgAsFi8YDs9q1cP6ANCACeiC0fMBOQKsAZnt9Yyt-ewBfaI9UTBw8Dg1qOkY8DGYCZSosMgAzbIBbfAFhUXFJGQVtVXUKLSRdAxMzSxs7R2dXD28EC38LfFNZWX19eyirY1DY+PRsXAICsDIAYwALAFksDD4yJlZ2Em4+fFWNnb2DuUVm+o0m0D0EI2N-fENZTuN9YMmVgATMY+oggT98BYxuN9LIhpMHPMQAklslLltdvs1gxMtl8Ll8kUMKUMddsTV7io1E9iNpXkDglZ7PggcCfv5ZCYQaEwQgbECvpFAl1DJzDIYrMjUUkCGBONQAK75MAABRpjWIDAAogA1bUAOTQAH0APL6gBKdzqGs0dOaDKs+nwwv8hiBbNkwUM0KsfPdrOFYvs3sC9kl0sWsvw8qVKvVDTtDAA4qazRaACLai3GgBCptNAGlrQ9bc8Wgg2c7Xe7Pd7fXybCzgi3QsF-A4foyLJHEssYwqqMqyGqy1qDWnVaaAMoASTQs9NBunJepifLjurgTdHqsXp9Pz5wUZ+Hs0PGTjDkSlcRRUf7saHKtNGGWueYvBTk4AMgBBQTaumWYWiutSluu9ovIgxhAoYIxDACLYfBYkoWI20L4P44TGB8kpBMyPa3jKD6DsOYAvm+H48AwE5mqqU4WmgACqBrzrO2qgVSICPJq9LQbB8EWIhwTIahfLGD6mHbv4TIyYMhgxER97JIS6zka+eCwAwpqZtmxqqn+AHbIaJoAGK-rO37ahmq7cWOfEIG6nxuiEbIKe63zuF4PjGMMbJBA4YooTeCx9ipeRqRRmkMNOhoZsaaDalZyYWr+2y2TxdoOU5mGSseLjhrB4yNs4UIwohnlAr4imhWiBDrCIsCjhBWlxca2y-hahbamgGX2Q6-FwchwmiTY-qClVYwenYPIOP4vZ1fgsBkFgxAQLmngMDoy0qvgWAFCOGAABTngAlAwxHJDta0bX1EEOe87TWLYDhOC4Xn9DYZiyR2sG2ECNV3mFBAjlQYBQNgxQMIIACaghWcaGZLtqd20g9oSfLMIJRIY7a45MJVWGVYwRBCoQRJMsS3sQzC4PAzSXRgNr3QNCAALQQlJoT6M49imMEKGWHybPGOYMJjN8YRAjzOHGAt0YkKkND0MzaOs-o1gsv5CnAuE3OGHy0IsnhQxeuEFhTIRtXRg1ojahgWRM+BatQZWFhAp8YqWLIZ5ROE-joXBIKyzBqFCSFQOLWSWIHKrvGsxCQmnhKMkOMye4A42AkCzCjJ804MFy0pwMDnGI4Ji7dks67ANi6H-3thTQx8oirKTB6Hw-DBZ5AvLJFl+plG8HHWWsyERPDflMu+8E6HG62To80yXoC334VYJFGkYPTa6V68eX4KEjIRP47IWx9iA2NW2G4cKvNW5HNuNc1tI71Xe+X5Eh8C3J-wKQL9hxqniDFEUMUR5rFyjorWAmxIAjw3IgSUzoUIoSiCCAGTl-Rbmkv4CEboeZrwINdda-Rd7x1dhrTk5hHCBDFDyF6JVPg50sPWfcIlgiEPwKDcGkN4GQQrPoEEzpZAwWBN6ewjJvh+m8vyUqOCfR2BcH8IusQgA */
   context: ({ input }) => ({
+    walletLimit: input.walletLimit,
     marketData: null,
     assetId: input.assetId,
     market: input.market,

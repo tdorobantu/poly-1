@@ -24,6 +24,7 @@ const fetchMarket = async () => {
     console.log(`📊 Fetching open orders for market: ${MARKET}...`);
     const openOrders = await clobClient.getOpenOrders({ asset_id: NO });
     console.log("📜 Open orders retrieved");
+    console.log(openOrders);
 
     console.log(`🪙 Fetching positions: ${MARKET}...`);
     const positions = await clobClient.getTrades({

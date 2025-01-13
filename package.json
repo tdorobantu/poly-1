@@ -20,6 +20,7 @@
     "@polymarket/order-utils": "^2.1.0",
     "dotenv": "^16.4.7",
     "ethers": "^5.7.2",
+    "node-fetch": "^3.3.2",
     "socket.io-client": "^4.8.1",
     "tslib": "^2.8.1",
     "xstate": "^5.19.1"
