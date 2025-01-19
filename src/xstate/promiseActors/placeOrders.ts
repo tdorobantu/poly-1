@@ -47,7 +47,7 @@ const placeOrders = async ({
 
   // * Cannot place an order size smaller than 6!
   const isBuying = sharesToBuy > 5 && isAboveWalletLimit;
-  const isSelling = sharesToSell > 5;
+  const isSelling = availableToClose > 5;
 
   const buyOrder = {
     tokenID: assetId,
@@ -86,7 +86,7 @@ const placeOrders = async ({
       console.log(responseBuyOrder);
     }
     if (isSelling) {
-      const sellLog = `💸 Selling ${sharesToSell} at $${ask}`;
+      const sellLog = `💰 Selling ${sharesToSell} at $${ask}`;
       console.log(sellLog);
 
       logToFile(

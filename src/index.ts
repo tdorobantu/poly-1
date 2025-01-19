@@ -12,6 +12,8 @@ import isBelowWalletLimit from "./utils/ethers/isBelowWalletLimit.ts";
 import getMarketFromSlug from "./utils/poly/getMarketFromSlug.ts";
 import getMarketsFromSlug from "./utils/poly/getMarketsFromSlug.ts";
 import PRESIDENTIAL_ROMANIA from "./constants/PRESIDENTIAL_ROMANIA.ts";
+import getWallet from "./utils/poly/getWallet.ts";
+import socketConnection from "./services/socketConnection.ts";
 
 const PERFORM_TEST_TRADES = false;
 
@@ -57,7 +59,15 @@ actor.subscribe((snapshot) => {
 });
 
 // Actors must be started by calling `actor.start()`, which will also start the actor system.
-actor.start();
+// actor.start();
+
+// only first page
+console.log(
+  await clobClient.getTradesPaginated({
+    market: MARKET,
+    maker_address: process.env.WALLET_POLY_MARKET,
+  })
+);
 
 if (PERFORM_TEST_TRADES) {
   console.log("⛔️ PERFORMING TEST TRADES ⛔️");
@@ -117,6 +127,7 @@ if (PERFORM_TEST_TRADES) {
   console.log("TEST TRADES ARE OFF 🎚️");
 }
 
+socketConnection("user");
 //
 
 // const market = await clobClient.getMarket(

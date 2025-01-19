@@ -54,7 +54,7 @@ const bsTrader = setup({
   },
   guards: {},
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EAZgCsAFnwAOAExmAjIesA2AOz79F2cfsAaEAE9EFgPxHYwBOELN9UP0zWUdrMwBfBO9UTBw8Dg1qOkY8DGYCZSosMgAzAoBbfAFhUXFJGQVtVXUKLSRdAxNzK1sHZ1d3L19EYzd8WQiLEKs4uwsklPRsXAJSsDIAYwALAFksDD4yJlZ2Em4+fHWtvYOjuUUOlo120D0EMziJjwj7Mz+QsYPN4-Ag3BZ8IYLJFrCFZIYTI5ZCFFiBUisMtcdvtDhsGHkCvgiiVyhgqljbrjGo8VGoXsRtO9PtZvn99H8AUDhqD9LJZOYXPpYfZ4eFDPpUej0gRYGQsMQIAAhHwMHSykrsLClMh4AAUvL5sgAlAwpat8OqFcqHs06W0GR13tZjLJ9EF7IZ7CFrI4AoCQiDEDZ8KEwt6jNZrC4IpLltKicVNmAAPIYVawE5sDgXdjEpOp9M2p52zQOt6IKN2CaGxxmT6OJGybn+CyGfAWUMRKIxOILVHEZi4eAdM14W2tUuMxAAWmbCFnsbS5pIWRo9HH9KnCDGgbB1ghoZCXu9xgcZkMi4xBE2ImQAFEMPkMBv7VvrPD7PgjCF9L64iLDE+XdeU-Dswl9D14kMBtL3jCkcSOF9J0dRATDMSFa1sIFYkiQxd1hdCwKPDwHHsADEmSNE43NPMUzTPBh1pCdXk6BB309L9DB-P8HHhICRjBPkgk7X5IPY2DzUtJVQSYzcULY8U22gmxgkiGI8IEutIQiVwIh9GJ7FCJIkiAA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EAZgCsAFnwAOAExmAjIesA2AOz79F2cfsAaEAE9EFgPxHYwBOELN9UP0zWUdrMwBfBO9UTBw8Dg1qOkY8DGYCZSosMgAzAoBbfAFhUXFJGQVtVXUKLSRdAxNzK1sHZ1d3L19EYzd8WQiLEKs4uwsklPRsXAJSsDIAYwALAFksDD4yJlZ2Em4+fHWtvYOjuUUOlo120D0EMziJjwj7Mz+QsYPN4-Ag3BZ8IYLJFrCFZIYTI5ZCFFiBUisMtcdvtDhsGHkCvgiiVyhgqljbrjGo8VGoXsRtO9PtZvn99H8AUDhqD9LJZOYXPpYfZ4eFDPpUej0oVipswAB5DCrWAnNgcC7sYlyxXKh7NOltBkdd7WIwsvl8xxmT6OJGybn+CyGfAWULhSIhaKxawLZJo5bS-CwMhYYgQABCPgYOmDJXYWFKZDwAApeRaAJQMKWrIMhsORvVPA2aI1vRDWYyyfRBeyGewhayOAKAkIgxA2fBusKmuym6ISv3ZjKbETIACiGHyGAYhdprRLjPL+i+y7+cWiJiFhjbCGijnwDYbNkccKr4qSfuIzFw8A6Q4w+vnr06CAAtA63-YJhbrPbwvWAibSUAxzEgshoehH3pRcEDGHcLB9TswhCesG2MBwzEMYC0hzEdRAnKcoMNGDTyCQxbTMMYfQiVsRlg6FzEcexjCMa17DXCJsIxNYNmxO4NiIhdjUQEwzEhK1bCBWJIm3OjYTE10wmY+wHHY+FEkHECMi1BUlTwW852g4SEF-Ot8CMT0mziEVDE+eC+SCN1rXZWtrFMrjA1jfNQUM4jjNsIxxOPFjjBiWTQWtSEIlcCJGxiZiUQvIA */
   context: ({ input }) => ({
     walletLimit: input.walletLimit,
     marketData: null,
@@ -85,7 +85,10 @@ const bsTrader = setup({
     },
 
     clobError: {
-      type: "final",
+      always: {
+        target: "standBy",
+        reenter: true,
+      },
     },
 
     fetchMarket: {
@@ -125,7 +128,7 @@ const bsTrader = setup({
 
     standBy: {
       after: {
-        "30000": "fetchMarket",
+        "120000": "fetchMarket",
       },
     },
   },
