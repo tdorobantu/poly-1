@@ -1,7 +1,7 @@
-import { getClobClient } from "./services/clobClientSingleton.ts";
-import MarketData from "./types/MarketData";
-import getAssetExposure from "./utils/poly/getAssetExposure.ts";
-import getUSDCBalance from "./utils/ethers/getBalance.ts";
+import { getClobClient } from "../../services/clobClientSingleton.ts";
+import MarketData from "../../types/MarketData";
+import getAssetExposure from "../../utils/poly/getAssetExposure.ts";
+import getUSDCBalance from "../../utils/ethers/getBalance.ts";
 
 const fetchMarketData = async ({
   input,
@@ -9,13 +9,16 @@ const fetchMarketData = async ({
   input: { market: string; assetId: string };
 }) => {
   let marketData: MarketData;
-
+  console.log("Hello fetchMarkeData 1", input);
   const { market, assetId } = input;
-
+  console.log("Hello fetchMarkeData 2");
   try {
     console.log("🚀 Starting market data fetch...");
 
-    const exposure = await getAssetExposure(market, assetId);
+    const { exposure, availableToClose, totalShares } = await getAssetExposure(
+      market,
+      assetId
+    );
     const walletBalance = await getUSDCBalance(process.env.WALLET_POLY_MARKET);
 
     console.log("🔗 Fetching ClobClient...");
@@ -33,9 +36,11 @@ const fetchMarketData = async ({
     console.log("🎉 Market data fetch completed successfully!");
 
     marketData = {
+      totalShares,
       orderBook,
       openOrders,
       exposure,
+      availableToClose,
       walletBalance: Number(walletBalance),
     };
   } catch (error) {

@@ -1,8 +1,9 @@
 import { createMachine, fromPromise, setup, assign, raise } from "xstate";
 import { getClobClient } from "../../services/clobClientSingleton.ts";
-import fetchMarkeData from "../../fetchMarketData.ts";
+import fetchMarkeData from "../promiseActors/fetchMarketData.ts";
 import MarketData from "../../types/MarketData";
 import { json } from "stream/consumers";
+import placeOrders from "../promiseActors/placeOrders.ts";
 
 // Define a simple XState machine
 const bsTrader = setup({
@@ -45,37 +46,15 @@ const bsTrader = setup({
           ? event.output
           : context.marketData,
     }),
-    sayMarketData: ({ context }) =>
-      console.log("the context is now ", JSON.stringify(context)),
-    evaluateFundsAndEvent: ({ context }) => {
-      if (!context.marketData) {
-        raise({ type: "NO_FUNDS" });
-      }
-      const { exposure, walletBalance } = context.marketData;
-
-      if (walletBalance <= context.walletLimit) {
-        raise({ type: "NO_FUNDS" });
-      }
-
-      if (exposure >= context.tradeLimit) {
-        raise({ type: "NO_FUNDS" });
-      }
-      if (context.timeLimit > Date.now()) {
-        raise({ type: "EVENT_OVER" });
-      }
-
-      raise({ type: "FUNDS_AVAILABLE" });
-    },
-
-    //   sayEvent: ({event}) => console.log("the event is now ", JSON.stringify(event))
   },
   actors: {
     getClobClient: fromPromise(getClobClient),
     fetchMarkeData: fromPromise(fetchMarkeData),
+    placeOrders: fromPromise(placeOrders),
   },
   guards: {},
 }).createMachine({
-  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EAZgCsAFnwAOAExmAjCaP6L1gJzGANCACeiaxYBs5w1sAdgtjJ19jQ1kLIIBfWPdUTBw8Dg1qOkY8DGYCZSosMgAzXIBbfAFhUXFJGQVtVXUKLSRdAxNzK1tje0cXdy8EIMN9fAiHILN9a2MLB194xPRsXAIisDIAYwALAFksDD4yJlZ2Em4+fHWtvYOjuUVWxo0W0D0EMxt8WWNfJzNZNZ9IDrFMBogvlFZNDfEEnIYnEEjBZFiAkitUtcdvtDhsGNlcvh8oUShhyljbri6o8VGoXsRtO9PtZvr9-oDgdZQfpwQhfPpTPonPMgqDZL5DKFUeiUgQwJxqABXQpgABiiuIEFgAEFNQBRTi1Bh6gBqeoAcmgAPoAeTNACUHg06c0Ga13tZhv5ZNNjLJPr5fNZZIZecGWWZhaETDFJZGzNLlrL8PKlSr1ZqdfrDVIGKqAKrmgAiAGUrdqTdqAJIAGW1ACEa3qnU8XZo3W9vDEzPhpn5ooFQiEwyN8BY-IYgkF-aDwoZE8lVimFVRlWQ1RqtbqIAajeabVaC8WSy3aU124zvF7vr7-WZA8HQ55vJLe1GekFjGZDPzQQuMXKK5rmANoYKs9bMLwDAAOIHgACnWgh6ra9pFnq9onvUrbnq8bQID4069gikQ+LYwrwryQqmJGDg9GE3TGHECRokmS6pquKqgeBkE8Aw+62nBcE2vaaCFlWaBVnqmE0iAzyupe+ExLIREuIOZFCk+gwxKYMy0T00zREECzMTKS7EpsYD1oqHhcXgsAMMJaH2laCHakhuwWtaqrVk2RanrJba4R614+jMd4PiGlHCuY74WOK8KIvoxlLIuqSbCIsBgHBgXEPZFpFlauzavaADSepoP5ckXu6iB9P4lhTACnqGDYYaAjFtExsMFhOP+yawGQWCavWHgMDoA0qvgWBFOuGAABRQgAlAwpmpBNw0eJVOUKbOLKyJMfgCqEFiTjyz4IIEhj4LpJ2+D804hCiJmsak5lgCWYBUFQtkYHllY1vm2poM2WFnvSO1KSpJGOAiGltRY+AhBKkxGf6vhzE9zHEMwuDwK0q0YM6OEdnhAC0vi8qTV1ODTNMhMC04+vowx9UuJDpDQ9BE+DNUILMYbWP4d22ACIQ-E4Pys2lIjIHqGA5IT2E852+Hiv4RguD1YRWJOvL8k45iyDTxg9IYZv-POz2pWsGzYncGzc-JvMmD2k42JYorTujFPncGCNGME44EVY0xS4BabrhmW7ZrUjvVSrMxfCdgJ+sYQLhLy0U3WnsLfiGNNh8uEcgWBeAQbwcdBd44oshrswuE4OtBGG6PXYCLWAgGgT7YXb1WTZpe-ZXJMeiMymip8NP7eK4pmFFgpRtOXQ-mbhfpWoWU5XjYNOyrcXM234RzH8oqRM3vvRG+nWzN1vVWwBVzs7A2yQMPCnH+PAq-oifi-G1LI3SSgiUU0QzBMRSg-daEARpv15vvIIh90ZJURDMXW51Yz4Bpg4X0P4hQRF7gUCyH0vo-W3gFYmO19remmDQ+8d0QxzwvqMccyMwF3XvBjeI8QgA */
+  /** @xstate-layout N4IgpgJg5mDOIC5QCNYBUBOBDCYMDoBLAO0IBdCsAbQgLzAGIIB7YsI4gN2YGt2YyAYSrNkwwmGJkA2gAYAuolAAHZrHKFWSkAA9EAZgCsAFnwAOAExmAjIesA2AOz79F2cfsAaEAE9EFgPxHYwBOELN9UP0zWUdrMwBfBO9UTBw8Dg1qOkY8DGYCZSosMgAzAoBbfAFhUXFJGQVtVXUKLSRdAxNzK1sHZ1d3L19EYzd8WQiLEKs4uwsklPRsXAJSsDIAYwALAFksDD4yJlZ2Em4+fHWtvYOjuUUOlo120D0EMziJjwj7Mz+QsYPN4-Ag3BZ8IYLJFrCFZIYTI5ZCFFiBUisMtcdvtDhsGHkCvgiiVyhgqljbrjGo8VGoXsRtO9PtZvn99H8AUDhqD9LJZOYXPpYfZ4eFDPpUej0gRYGQsMQIAAhHwMHSykrsLClMh4AAUvL5sgAlAwpat8OqFcqHs06W0GR13tZjLJ9EF7IZ7CFrI4AoCQiDEDZ8KEwt6jNZrC4IpLltKicVNmAAPIYVawE5sDgXdjEpOp9M2p52zQOt6IKN2CaGxxmT6OJGybn+CyGfAWUMRKIxOILVHEZi4eAdM14W2tUuMxAAWmbCFnsbS5pIWRo9HH9KnCDGgbB1ghoZCXu9xgcZkMi4xBE2ImQAFEMPkMBv7VvrPD7PgjCF9L64iLDE+XdeU-Dswl9D14kMBtL3jCkcSOF9J0dRATDMSFa1sIFYkiQxd1hdCwKPDwHHsADEmSNE43NPMUzTPBh1pCdXk6BB309L9DB-P8HHhICRjBPkgk7X5IPY2DzUtJVQSYzcULY8U22gmxgkiGI8IEutIQiVwIh9GJ7FCJIkiAA */
   context: ({ input }) => ({
     walletLimit: input.walletLimit,
     marketData: null,
@@ -114,8 +93,9 @@ const bsTrader = setup({
         id: "fetchMarket",
         systemId: "fetchMarket",
         src: "fetchMarkeData",
+        input: ({ context: { market, assetId } }) => ({ market, assetId }),
         onDone: {
-          target: "placeSellOrders",
+          target: "placeOrders",
           reenter: true,
           actions: [{ type: "assignMarketData" }],
         },
@@ -127,67 +107,25 @@ const bsTrader = setup({
       },
     },
 
-    evaluateFundsAndEvent: {
-      entry: [{ type: "evaluateFundsAndEvent" }],
-      on: {
-        EVENT_OVER: {
-          target: "closePositions",
-          reenter: true,
-        },
+    placeOrders: {
+      invoke: {
+        src: "placeOrders",
+        id: "placeOrders",
 
-        FUNDS_AVAILABLE: "evaluateOrderBook",
+        input: ({
+          context: { tradeLimit, walletLimit, marketData, assetId },
+        }) => ({ tradeLimit, walletLimit, marketData, assetId }),
 
-        NO_FUNDS: {
+        onDone: {
           target: "standBy",
           reenter: true,
         },
       },
-    },
-
-    evaluateOrderBook: {
-      on: {
-        GO_PLACE_ORDERS: "placeBuyOrders",
-        NO_OPPORTUNITIES: {
-          target: "standBy",
-          reenter: true,
-        },
-      },
-    },
-
-    placeBuyOrders: {
-      on: {
-        ORDER_PLACEMENT_FAILED: {
-          target: "standBy",
-          reenter: true,
-        },
-      },
-    },
-
-    closePositions: {
-      on: {
-        END_MARKET: "finished",
-      },
-    },
-
-    finished: {
-      type: "final",
     },
 
     standBy: {
       after: {
-        "500": {
-          target: "fetchMarket",
-          reenter: true,
-        },
-      },
-    },
-
-    placeSellOrders: {
-      on: {
-        EVALUATE: {
-          target: "evaluateFundsAndEvent",
-          reenter: true,
-        },
+        "30000": "fetchMarket",
       },
     },
   },

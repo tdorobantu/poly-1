@@ -1,13 +1,17 @@
+import { Side } from "@polymarket/clob-client";
 import { getClobClient } from "../../services/clobClientSingleton.ts";
 import getPolymarketPositions from "./getPolymarketPositions.ts";
 
 const getAssetExposure = async (market: string, assetId: string) => {
   const USER = process.env.WALLET_POLY_MARKET;
   let exposure = 0;
+  let availableToClose = 0;
+  let totalShares = 0;
 
   try {
     console.log("⚖️ Fetching open positions!");
     const openPositions = await getPolymarketPositions(USER, market);
+    // console.log(positions AsyncResource, )
 
     console.log("📔 Initializing clobClient!");
     const clobClient = await getClobClient();
@@ -31,11 +35,36 @@ const getAssetExposure = async (market: string, assetId: string) => {
       0
     );
 
-    exposure = totalOpenOrders + totalOpenPositions;
+    const totalBuyOpenOrders = openOrders
+      .filter((order) => order.side === Side.BUY)
+      .reduce(
+        (total, { original_size, size_matched, price }) =>
+          total +
+          (Number(original_size) - Number(size_matched)) * Number(price),
+        0
+      );
+
+    const totalSellOpenOrders = openOrders
+      .filter((order) => order.side === Side.SELL)
+      .reduce(
+        (total, { original_size, size_matched, price }) =>
+          total +
+          (Number(original_size) - Number(size_matched)) * Number(price),
+        0
+      );
+
+    exposure = totalOpenPositions + totalBuyOpenOrders;
+
+    availableToClose = totalOpenPositions - totalSellOpenOrders;
+
+    totalShares = openPositions.reduce((total, { size }) => total + size, 0);
 
     console.log(
-      `👺 💵 Exposure is ${exposure}  Current open Positions are ${totalOpenPositions} and open BUY orders are ${totalOpenOrders}`
+      `👺 💵 Exposure is ${exposure}  Current open Positions are ${totalOpenPositions}, BUY orders are ${totalBuyOpenOrders} and SELL orders ${totalSellOpenOrders}`
     );
+
+    console.log("🤑 Available to close ", availableToClose);
+    console.log("Current shares you own ", totalShares);
   } catch (error) {
     console.error("❌ An error occurred while fetching market data:");
     console.error(error);
@@ -43,7 +72,7 @@ const getAssetExposure = async (market: string, assetId: string) => {
   }
 
   //   console.log(JSON.stringify(marketData));
-  return exposure;
+  return { exposure, availableToClose, totalShares };
 };
 
 export default getAssetExposure;

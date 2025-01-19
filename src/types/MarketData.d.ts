@@ -9,6 +9,8 @@ type MarketData = null | {
   openOrders: OpenOrdersResponse;
   exposure: number;
   walletBalance: number;
+  availableToClose: number;
+  totalShares: number;
 };
 
 export default MarketData;
