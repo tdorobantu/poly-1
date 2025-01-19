@@ -32,10 +32,7 @@ const placeOrders = async ({
   console.log("availableToClose / bid: ", Math.floor(availableToClose / bid));
   console.log("totalShares: ", totalShares);
   const sharesToBuy = Math.floor(availableToBid / bid);
-  const sharesToSell = Math.min(
-    Math.floor(availableToClose / bid),
-    Math.floor(totalShares)
-  );
+  const sharesToSell = totalShares;
 
   console.log("your data thus far ", {
     availableToBid,

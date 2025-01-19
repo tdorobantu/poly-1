@@ -7,6 +7,7 @@ const getAssetExposure = async (market: string, assetId: string) => {
   let exposure = 0;
   let availableToClose = 0;
   let totalShares = 0;
+  let totalSellShares = 0;
 
   try {
     console.log("⚖️ Fetching open positions!");
@@ -55,9 +56,17 @@ const getAssetExposure = async (market: string, assetId: string) => {
 
     exposure = totalOpenPositions + totalBuyOpenOrders;
 
-    availableToClose = totalOpenPositions - totalSellOpenOrders;
-
     totalShares = openPositions.reduce((total, { size }) => total + size, 0);
+
+    totalSellShares = openOrders
+      .filter((order) => order.side === Side.SELL)
+      .reduce(
+        (total, { original_size, size_matched, price }) =>
+          total + (Number(original_size) - Number(size_matched)),
+        0
+      );
+
+    availableToClose = totalShares - totalSellShares;
 
     console.log(
       `👺 💵 Exposure is ${exposure}  Current open Positions are ${totalOpenPositions}, BUY orders are ${totalBuyOpenOrders} and SELL orders ${totalSellOpenOrders}`
@@ -72,7 +81,7 @@ const getAssetExposure = async (market: string, assetId: string) => {
   }
 
   //   console.log(JSON.stringify(marketData));
-  return { exposure, availableToClose, totalShares };
+  return { exposure, availableToClose, totalShares, totalSellShares };
 };
 
 export default getAssetExposure;
