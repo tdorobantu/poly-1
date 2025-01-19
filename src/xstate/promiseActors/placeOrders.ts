@@ -1,6 +1,7 @@
 import { OrderType, Side } from "@polymarket/clob-client";
 import { getClobClient } from "../../services/clobClientSingleton.ts";
 import MarketData from "../../types/MarketData";
+import logToFile from "../../utils/logToFile.ts";
 
 const placeOrders = async ({
   input,
@@ -19,11 +20,10 @@ const placeOrders = async ({
 
   if (walletLimit >= walletBalance) {
     console.log("💳 ⛔️ Wallet Limit Reached. No Bets being placed!");
-    return;
   }
 
   const availableToBid = tradeLimit - exposure;
-
+  const isAboveWalletLimit = walletLimit <= walletBalance;
   // GET BID and ASK Prices
   const bid = Math.max(...orderBook.bids.map((bid) => Number(bid.price)));
   const ask = Math.min(...orderBook.asks.map((ask) => Number(ask.price)));
@@ -34,17 +34,19 @@ const placeOrders = async ({
   const sharesToBuy = Math.floor(availableToBid / bid);
   const sharesToSell = totalShares;
 
-  console.log("your data thus far ", {
+  const placeOrderData = {
     availableToBid,
     availableToClose,
     bid,
     ask,
     sharesToBuy,
     sharesToSell,
-  });
+  };
+
+  console.log("🚀 place order data ", placeOrderData);
 
   // * Cannot place an order size smaller than 6!
-  const isBuying = sharesToBuy > 5;
+  const isBuying = sharesToBuy > 5 && isAboveWalletLimit;
   const isSelling = sharesToSell > 5;
 
   const buyOrder = {
@@ -59,6 +61,13 @@ const placeOrders = async ({
   try {
     const clobClient = await getClobClient();
     if (isBuying) {
+      const buyLog = `💸 Buying ${sharesToBuy} at $${bid}`;
+      console.log(buyLog);
+
+      logToFile(
+        "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
+        buyLog
+      );
       const buyOrder = await clobClient.createOrder({
         tokenID: assetId,
         price: bid,
@@ -66,16 +75,25 @@ const placeOrders = async ({
         size: sharesToBuy,
         feeRateBps: 0,
         nonce: 0,
+        expiration: Math.ceil(Date.now() / 1000) + 600,
       });
 
       const responseBuyOrder = await clobClient.postOrder(
         buyOrder,
-        OrderType.GTC
+        OrderType.GTD
       );
 
       console.log(responseBuyOrder);
     }
     if (isSelling) {
+      const sellLog = `💸 Selling ${sharesToSell} at $${ask}`;
+      console.log(sellLog);
+
+      logToFile(
+        "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
+        sellLog
+      );
+
       const sellOrder = await clobClient.createOrder({
         tokenID: assetId,
         price: ask,
@@ -97,6 +115,16 @@ const placeOrders = async ({
     console.error(error);
     throw error; // Re-throw the error for higher-level handling if needed.
   }
+
+  logToFile(
+    "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
+    JSON.stringify(marketData.openOrders)
+  );
+
+  logToFile(
+    "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
+    JSON.stringify(placeOrderData)
+  );
 };
 
 export default placeOrders;

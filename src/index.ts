@@ -9,14 +9,15 @@ import getAssetExposure from "./utils/poly/getAssetExposure.ts";
 import fetchMarket from "./xstate/promiseActors/fetchMarketData.ts";
 import cancelOrdersByAssetId from "./utils/poly/cancelOrdersByAssetId.ts";
 import isBelowWalletLimit from "./utils/ethers/isBelowWalletLimit.ts";
+import getMarketFromSlug from "./utils/poly/getMarketFromSlug.ts";
+import getMarketsFromSlug from "./utils/poly/getMarketsFromSlug.ts";
+import PRESIDENTIAL_ROMANIA from "./constants/PRESIDENTIAL_ROMANIA.ts";
 
 const PERFORM_TEST_TRADES = false;
 
-const MARKET =
-  "0xb7faecd2db357e4634fe87ef9bb48b4e1305cd618276d730b73190662fe6bafd";
+const MARKET = PRESIDENTIAL_ROMANIA.MARKET_IDS.NICUSOR_DAN;
 
-const ASSET_ID =
-  "70153859989212405649302660029170495449818146693944403467922191183238786687468";
+const ASSET_ID = PRESIDENTIAL_ROMANIA.ASSET_IDS.NICUSOR_DAN_YES;
 
 const UNTIL_MAY_OF_THIS_YEAR = 1746046800;
 
@@ -35,14 +36,14 @@ const clobClient = await getClobClient();
 
 // console.log("the response to cancel order was", cancelOrder);
 
-await cancelOrdersByAssetId(ASSET_ID, Side.SELL);
+// await cancelOrdersByAssetId(ASSET_ID, Side.SELL);
 // ! ORDER CANCELING LOGIC ENDS
 
 const input = {
   assetId: ASSET_ID,
   market: MARKET,
-  walletLimit: 290,
-  tradeLimit: 30,
+  walletLimit: 280,
+  tradeLimit: 20,
   timeLimit: UNTIL_MAY_OF_THIS_YEAR,
 };
 
@@ -56,7 +57,7 @@ actor.subscribe((snapshot) => {
 });
 
 // Actors must be started by calling `actor.start()`, which will also start the actor system.
-// actor.start();
+actor.start();
 
 if (PERFORM_TEST_TRADES) {
   console.log("⛔️ PERFORMING TEST TRADES ⛔️");
@@ -115,5 +116,13 @@ if (PERFORM_TEST_TRADES) {
 } else {
   console.log("TEST TRADES ARE OFF 🎚️");
 }
+
+//
+
+// const market = await clobClient.getMarket(
+//   "0xaf51603d78545c838490bafe178ee9ff4c23d0c2161f15e0e530d3735229ad3f"
+// );
+
+// console.log("markets", market);
 
 // Send events to the machine
