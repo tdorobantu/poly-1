@@ -14,12 +14,19 @@ import getMarketsFromSlug from "./utils/poly/getMarketsFromSlug.ts";
 import PRESIDENTIAL_ROMANIA from "./constants/PRESIDENTIAL_ROMANIA.ts";
 import getWallet from "./utils/poly/getWallet.ts";
 import socketConnection from "./services/socketConnection.ts";
+import getChatId from "./services/getChatId.ts";
+import createTelegramBot from "./services/telegram.ts";
 
 const PERFORM_TEST_TRADES = false;
 
-const MARKET = PRESIDENTIAL_ROMANIA.MARKET_IDS.NICUSOR_DAN;
+const MARKET_NICUSOR_DAN = PRESIDENTIAL_ROMANIA.MARKET_IDS.NICUSOR_DAN;
 
-const ASSET_ID = PRESIDENTIAL_ROMANIA.ASSET_IDS.NICUSOR_DAN_YES;
+const NICUSOR_DAN_YES_ASSET_ID = PRESIDENTIAL_ROMANIA.ASSET_IDS.NICUSOR_DAN_YES;
+
+const MARKET_CRISTIAN_SIMA = PRESIDENTIAL_ROMANIA.MARKET_IDS.CRISTIAN_SIMA;
+
+const CRISTIAN_SIMA_YES_ASSET_ID =
+  PRESIDENTIAL_ROMANIA.ASSET_IDS.CRISTIAN_SIMA_YES;
 
 const UNTIL_MAY_OF_THIS_YEAR = 1746046800;
 
@@ -42,11 +49,13 @@ const clobClient = await getClobClient();
 // ! ORDER CANCELING LOGIC ENDS
 
 const input = {
-  assetId: ASSET_ID,
-  market: MARKET,
+  assetId: CRISTIAN_SIMA_YES_ASSET_ID,
+  market: MARKET_CRISTIAN_SIMA,
   walletLimit: 280,
   tradeLimit: 20,
   timeLimit: UNTIL_MAY_OF_THIS_YEAR,
+  bidLimit: 0.025,
+  askLimit: 0.02,
 };
 
 // Create the actor and pass the input values to the context
@@ -62,74 +71,77 @@ actor.subscribe((snapshot) => {
 // actor.start();
 
 // only first page
-console.log(
-  await clobClient.getTradesPaginated({
-    market: MARKET,
-    maker_address: process.env.WALLET_POLY_MARKET,
-  })
-);
+// console.log(
+//   await clobClient.getTradesPaginated({
+//     market: MARKET,
+//     maker_address: process.env.WALLET_POLY_MARKET,
+//   })
+// );
 
-if (PERFORM_TEST_TRADES) {
-  console.log("⛔️ PERFORMING TEST TRADES ⛔️");
+// if (PERFORM_TEST_TRADES) {
+//   console.log("⛔️ PERFORMING TEST TRADES ⛔️");
 
-  const order1 = await clobClient.createOrder({
-    tokenID: ASSET_ID,
-    price: 0.4,
-    side: Side.SELL,
-    size: 7,
-    feeRateBps: 0,
-    nonce: 0,
-  });
+//   const order1 = await clobClient.createOrder({
+//     tokenID: ASSET_ID,
+//     price: 0.4,
+//     side: Side.SELL,
+//     size: 7,
+//     feeRateBps: 0,
+//     nonce: 0,
+//   });
 
-  const resp = await clobClient.postOrder(order1, OrderType.GTC);
-  console.log(resp);
+//   const resp = await clobClient.postOrder(order1, OrderType.GTC);
+//   console.log(resp);
 
-  // const order2 = await clobClient.createOrder({
-  //   tokenID: ASSET_ID,
-  //   price: 0.32,
-  //   side: Side.SELL,
-  //   size: 7,
-  //   feeRateBps: 0,
-  //   nonce: 0,
-  // });
+//   // const order2 = await clobClient.createOrder({
+//   //   tokenID: ASSET_ID,
+//   //   price: 0.32,
+//   //   side: Side.SELL,
+//   //   size: 7,
+//   //   feeRateBps: 0,
+//   //   nonce: 0,
+//   // });
 
-  // const resp2 = await clobClient.postOrder(order2, OrderType.GTC);
-  // console.log(resp2);
+//   // const resp2 = await clobClient.postOrder(order2, OrderType.GTC);
+//   // console.log(resp2);
 
-  // const order3 = await clobClient.createOrder({
-  //   tokenID: ASSET_ID,
-  //   price: 0.6,
-  //   side: Side.SELL,
-  //   size: 7,
-  //   feeRateBps: 0,
-  //   nonce: 0,
-  // });
+//   // const order3 = await clobClient.createOrder({
+//   //   tokenID: ASSET_ID,
+//   //   price: 0.6,
+//   //   side: Side.SELL,
+//   //   size: 7,
+//   //   feeRateBps: 0,
+//   //   nonce: 0,
+//   // });
 
-  // const resp3 = await clobClient.postOrder(order3, OrderType.GTC);
-  // console.log(resp3);
+//   // const resp3 = await clobClient.postOrder(order3, OrderType.GTC);
+//   // console.log(resp3);
 
-  // const order4 = await clobClient.createOrder({
-  //   tokenID: ASSET_ID,
-  //   price: 0.35,
-  //   side: Side.SELL,
-  //   size: 7,
-  //   feeRateBps: 0,
-  //   nonce: 0,
-  // });
-  // const start = Date.now();
-  // const resp4 = await clobClient.postOrder(order4, OrderType.GTC);
-  // const total = Date.now() - start;
+//   // const order4 = await clobClient.createOrder({
+//   //   tokenID: ASSET_ID,
+//   //   price: 0.35,
+//   //   side: Side.SELL,
+//   //   size: 7,
+//   //   feeRateBps: 0,
+//   //   nonce: 0,
+//   // });
+//   // const start = Date.now();
+//   // const resp4 = await clobClient.postOrder(order4, OrderType.GTC);
+//   // const total = Date.now() - start;
 
-  // console.log(resp4);
+//   // console.log(resp4);
 
-  // console.log("last trade took " + total + " (ms)");
-} else {
-  console.log("TEST TRADES ARE OFF 🎚️");
-}
+//   // console.log("last trade took " + total + " (ms)");
+// } else {
+//   console.log("TEST TRADES ARE OFF 🎚️");
+// }
 
-socketConnection("user");
+// socketConnection("user");
 //
 
+const { sendMessage } = createTelegramBot();
+
+sendMessage("🍆");
 // const market = await clobClient.getMarket(
 //   "0xaf51603d78545c838490bafe178ee9ff4c23d0c2161f15e0e530d3735229ad3f"
 // );

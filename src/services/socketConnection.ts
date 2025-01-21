@@ -16,7 +16,13 @@ interface subscriptionMessage {
  *
  * @param type user | market
  */
-const socketConnection = async (type: "user" | "market" | "live-activity") => {
+const socketConnection = async (
+  type: "user" | "market" | "live-activity",
+  onMessage?: (msg: string) => void,
+  onClose?: (msg: string) => void,
+  onError?: (msg: string) => void,
+  onOpen?: (msg: string) => void
+) => {
   const host = process.env.WS_URL || "ws://localhost:8081";
   console.log(`${host}${type}`);
   const ws = new WebSocket(`${host}${type}`); // change to market for market, user for user
@@ -56,6 +62,7 @@ const socketConnection = async (type: "user" | "market" | "live-activity") => {
 
   ws.on("error", function (err: Error) {
     console.log("error SOCKET", "error", err);
+    onError && onError(`🪦 Socket error: ${err.toString()}!`);
     process.exit(1);
   });
   ws.on("close", function (code: number, reason: Buffer) {
@@ -66,6 +73,8 @@ const socketConnection = async (type: "user" | "market" | "live-activity") => {
       "reason",
       reason.toString()
     );
+    onClose &&
+      onClose(`❌ Socket disconnected! Code ${code}: ${reason.toString()}!`);
     process.exit(1);
   });
 
@@ -76,6 +85,7 @@ const socketConnection = async (type: "user" | "market" | "live-activity") => {
           console.log("send error", err);
           process.exit(1);
         }
+        onOpen && onOpen(`🔌 Socket donnected! Reporting ${type}!`);
       }); // send sub message
     }
 
@@ -92,6 +102,7 @@ const socketConnection = async (type: "user" | "market" | "live-activity") => {
   ws.onmessage = function (msg: any) {
     console.log(msg.data);
     if (msg.data !== "PONG") {
+      onMessage && onMessage(msg.data);
       logToFile(
         "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
         `🔌 socket message: ${msg.data}`

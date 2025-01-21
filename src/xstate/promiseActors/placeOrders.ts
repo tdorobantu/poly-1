@@ -11,9 +11,11 @@ const placeOrders = async ({
     walletLimit: number;
     marketData: MarketData;
     assetId: string;
+    bidLimit: number;
+    askLimit: number;
   };
 }) => {
-  const { tradeLimit, walletLimit, marketData, assetId } = input;
+  const { tradeLimit, walletLimit, marketData, assetId, bidLimit } = input;
 
   const { availableToClose, walletBalance, exposure, orderBook, totalShares } =
     marketData;
@@ -45,18 +47,19 @@ const placeOrders = async ({
 
   console.log("🚀 place order data ", placeOrderData);
 
-  // * Cannot place an order size smaller than 6!
-  const isBuying = sharesToBuy > 5 && isAboveWalletLimit;
-  const isSelling = availableToClose > 5;
+  const belowBidLimit = bid <= bidLimit;
 
-  const buyOrder = {
-    tokenID: assetId,
-    price: bid,
-    side: Side.BUY,
-    size: 7,
-    feeRateBps: 0,
-    nonce: 0,
-  };
+  if (!belowBidLimit) {
+    console.log("💳 ⛔️ Bid Limit Reached. No Bets being placed!");
+    logToFile(
+      "/Users/tudor/Documents/codebase-apple/polymarket/poly-1/logs/traderLogs.txt",
+      "💳 ⛔️ Bid Limit Reached. No Bets being placed!"
+    );
+  }
+
+  // * Cannot place an order size smaller than 5!
+  const isBuying = sharesToBuy > 5 && isAboveWalletLimit && belowBidLimit;
+  const isSelling = availableToClose > 5;
 
   try {
     const clobClient = await getClobClient();
@@ -96,9 +99,9 @@ const placeOrders = async ({
 
       const sellOrder = await clobClient.createOrder({
         tokenID: assetId,
-        price: ask,
+        price: Math.max(ask, input.askLimit),
         side: Side.SELL,
-        size: sharesToSell,
+        size: availableToClose,
         feeRateBps: 0,
         nonce: 0,
       });

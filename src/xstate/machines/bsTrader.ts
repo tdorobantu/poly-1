@@ -15,6 +15,8 @@ const bsTrader = setup({
       walletLimit: number;
       tradeLimit: number;
       timeLimit: number;
+      bidLimit: number;
+      askLimit: number;
     },
     input: {} as {
       assetId: string;
@@ -22,6 +24,8 @@ const bsTrader = setup({
       walletLimit: number;
       tradeLimit: number;
       timeLimit: number;
+      bidLimit: number;
+      askLimit: number;
     },
     events: {} as
       | { type: "GO_CLOB_ERROR"; value: string }
@@ -62,6 +66,8 @@ const bsTrader = setup({
     market: input.market,
     tradeLimit: input.tradeLimit,
     timeLimit: input.timeLimit,
+    bidLimit: input.bidLimit,
+    askLimit: input.askLimit,
   }),
   id: "bsTrader",
   initial: "initialize",
@@ -116,8 +122,22 @@ const bsTrader = setup({
         id: "placeOrders",
 
         input: ({
-          context: { tradeLimit, walletLimit, marketData, assetId },
-        }) => ({ tradeLimit, walletLimit, marketData, assetId }),
+          context: {
+            tradeLimit,
+            walletLimit,
+            marketData,
+            assetId,
+            bidLimit,
+            askLimit,
+          },
+        }) => ({
+          tradeLimit,
+          walletLimit,
+          marketData,
+          assetId,
+          bidLimit,
+          askLimit,
+        }),
 
         onDone: {
           target: "standBy",

@@ -66,7 +66,7 @@ const getAssetExposure = async (market: string, assetId: string) => {
         0
       );
 
-    availableToClose = totalShares - totalSellShares;
+    availableToClose = Math.floor(totalShares - totalSellShares);
 
     console.log(
       `👺 💵 Exposure is ${exposure}  Current open Positions are ${totalOpenPositions}, BUY orders are ${totalBuyOpenOrders} and SELL orders ${totalSellOpenOrders}`
